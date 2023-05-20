@@ -22,7 +22,12 @@ export async function insert(dbName, collectionName, data) {
   }
 }
 
-export async function read(dbName, collectionName, findQuery) {
+export async function read(
+  dbName,
+  collectionName,
+  findQuery,
+  isFindOne = false
+) {
   const client = new MongoClient(process.env.URL);
 
   try {
@@ -32,15 +37,25 @@ export async function read(dbName, collectionName, findQuery) {
     const collection = database.collection(collectionName);
 
     try {
-      const cursor = await collection.find(findQuery);
-      console.log(cursor);
+      if (isFindOne) {
+        return await collection.findOne(findQuery);
+      } else {
+        const cursor = collection.find(findQuery);
+        let arr = [];
+
+        for await (const doc of cursor) {
+          arr.push(doc);
+        }
+
+        return arr;
+      }
     } catch (err) {
-      console.error(`ERROR: ${err}`);
+      console.log(err);
     }
   } catch (err) {
-    console.log("Error occurs when connecting: ", err);
+    console.log(err);
   } finally {
-    client.close();
+    await client.close();
   }
 }
 
@@ -63,7 +78,7 @@ export async function update(dbName, collectionName, findQuery, updateDoc) {
   } catch (err) {
     console.log("Error occurs when connecting: ", err);
   } finally {
-    client.close();
+    await client.close();
   }
 }
 
@@ -85,6 +100,33 @@ export async function remove(dbName, collectionName, deleteQuery) {
   } catch (err) {
     console.log("Error occurs when connecting: ", err);
   } finally {
-    client.close();
+    await client.close();
+  }
+}
+
+export async function include(dbName, collectionName, findQuery) {
+  const client = new MongoClient(process.env.URL);
+
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+
+    try {
+      const result = await collection.findOne(findQuery);
+      console.log("findResult: ", result);
+
+      if (result) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  } catch (err) {
+    console.log(err);
+  } finally {
+    await client.close();
   }
 }

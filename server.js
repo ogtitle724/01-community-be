@@ -1,4 +1,6 @@
 import { insert, read, update, remove } from "./src/db_control/mongo.js";
+import signUp from "./src/sign/signUp.js";
+import logIn from "./src/sign/logIn.js";
 import dotenv from "dotenv";
 import qs from "qs";
 import cors from "cors";
@@ -19,14 +21,25 @@ app.get("/search", (req, res) => {
   res.send(req.body);
 });
 
-app.post("/process_login", (req, res) => {
+app.post("/api/auth/authenticate", (req, res) => {
+  console.log("\n--------------------logIn--------------------\n");
+  /**
+   * login
+   * 유효성 검사
+   * 유효할 경우 토큰 발급 그 외의 경우 거부
+   */
+  const [id, password] = [req.body.uid, req.body.password];
+  console.log(id, password);
+  logIn(id, password);
   res.send("log in");
 });
 
-app.post("/process_signup", (req, res) => {
-  insert("TEST", "user", req.body);
+app.post("/api/auth/register", async (req, res) => {
+  console.log("\n--------------------signUp--------------------\n");
+  const isSuccess = await signUp(req.body.uid, req.body.password);
 
-  res.send();
+  if (isSuccess) res.send(true);
+  else res.send(false);
 });
 
 app.listen(process.env.PORT, () =>
