@@ -1,4 +1,4 @@
-import { read } from "../db_control/mongo.js";
+import { read } from "../config/database.js";
 
 export default async function logIn(id, pwd) {
   const user = await read("TEST", "user", { eMail: id }, true);

@@ -1,4 +1,4 @@
-import { include, insert } from "../db_control/mongo.js";
+import { include, insert } from "../config/database.js";
 import bcrypt from "bcrypt";
 
 export default async function signUp(id, pwd) {
