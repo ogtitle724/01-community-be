@@ -1,18 +1,14 @@
-import { sample } from "../config/sample.js";
-import { pagination } from "../services/dbManager/dbManager.js";
+import { pagination } from "../services/db/manager.js";
 
-export const sendPostData = async (req, res) => {
-  let postData;
+export const sendPosts = async (req, res) => {
+  let postsObj;
+  const { category, size, page } = req.query;
 
-  if (["home", "best"].includes(req.query.category)) {
-    postData = await pagination(req.query.size, req.query.page);
+  if (["home", "best"].includes(category)) {
+    postsObj = await pagination(size, page);
   } else {
-    postData = await pagination(
-      req.query.size,
-      req.query.page,
-      req.query.category
-    );
+    postsObj = await pagination(size, page, category);
   }
 
-  res.send(postData);
+  res.send(postsObj);
 };
