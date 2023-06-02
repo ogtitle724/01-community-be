@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
+import cookieParser from "cookie-parser";
 import boardRouter from "./routes/boardRouter.js";
 import authRouter from "./routes/authRouter.js";
 
@@ -9,10 +10,20 @@ const app = express();
 
 // Middleware setup
 app.use(express.json()); // Parse JSON request bodies
-app.use(express.urlencoded({ extended: false })); // Parse URL-encoded request bodies
-app.use(cors());
+app.use(cookieParser(process.env.COOKIE_SECRET, { secure: true }));
+app.use(express.urlencoded({ extended: false })); // Parse URL-encoded request bodies(use bulit-in querystring library)
+app.use(
+  //cors setting for cookie
+  cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
 // Routes setup
+// use middleware to detect token
 app.use("/api/board", boardRouter);
 app.use("/api/auth", authRouter);
 

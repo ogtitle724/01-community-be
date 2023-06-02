@@ -1,6 +1,6 @@
 import { find, createUser } from "../services/db/manager.js";
 import { compare } from "../utils/bcrypt.js";
-import { generateTokens } from "../services/auth/generateToken.js";
+import { generateTokens } from "../services/token/generateToken.js";
 
 export const signUp = async (req, res) => {
   const { email, emailReceive, nick, pwd, uid } = req.body;
@@ -36,9 +36,15 @@ export const signIn = async (req, res) => {
     const isPwdMatch = await compare(pwd, userData.pwd);
 
     if (isPwdMatch) {
-      const tokens = generateTokens(userData);
+      const tokens = await generateTokens(userData);
 
-      res.status(200).send(tokens);
+      res
+        .status(200)
+        .cookie("refreshToken", tokens.refreshToken, {
+          httpOnly: true,
+          signed: true,
+        })
+        .json(JSON.stringify({ accessToken: tokens.accessToken }));
     } else {
       throw new Error("passowrd does not match");
     }
