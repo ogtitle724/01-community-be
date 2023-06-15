@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import { insert } from "../db/manager.js";
+import { insert, find } from "../db/manager.js";
 
 dotenv.config();
 
@@ -9,6 +9,8 @@ export const generateTokens = async (userData) => {
 
   try {
     delete userData.pwd, userData._id;
+    userData = { ...userData, timestamp: Date.now() };
+
     const accessToken = jwt.sign(userData, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: "15m",
     });
@@ -30,24 +32,32 @@ export const regenerateToken = async (refreshToken) => {
   try {
     const isTokenValid = await find({ token: refreshToken }, "refresh_tokens");
 
-    if (!isTokenValid) return console.log("Not valid refreshToken");
+    if (!isTokenValid) throw new Error("Not valid refreshToken");
 
-    jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET,
-      (err, userData) => {
-        if (err) return console.err(err);
-
-        const accessToken = jwt.sign(
-          userData,
-          process.env.ACCESS_TOKEN_SECRET,
-          {
-            expiresIn: "15m",
+    return new Promise((resolve, reject) => {
+      jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET,
+        (err, tokenData) => {
+          if (err) {
+            console.error(err);
+            reject(err);
           }
-        );
-        return { accessToken };
-      }
-    );
+
+          const newTokenData = {
+            ...tokenData,
+            timestamp: Date.now(),
+          };
+
+          const accessToken = jwt.sign(
+            newTokenData,
+            process.env.ACCESS_TOKEN_SECRET
+          );
+          console.log("regenerated token:", accessToken);
+          resolve({ accessToken });
+        }
+      );
+    });
   } catch (err) {
     console.error(err);
     throw err;

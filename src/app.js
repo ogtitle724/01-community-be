@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
+import autoLogIn from "./middleware/tokenLogin.js";
 import boardRouter from "./routes/boardRouter.js";
 import authRouter from "./routes/authRouter.js";
 
@@ -23,7 +24,7 @@ app.use(
 );
 
 // Routes setup
-// use middleware to detect token
+app.use(autoLogIn);
 app.use("/api/board", boardRouter);
 app.use("/api/auth", authRouter);
 

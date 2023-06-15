@@ -16,8 +16,8 @@ export const find = async (query, collectionName, isMany = false) => {
     }
 
     result
-      ? console.log(`Data exists in the collection => query:`, query)
-      : console.log(`Data does not exist in the collection => query:`, query);
+      ? console.log(`Data exists in the collection`)
+      : console.log(`Data does not exist in the collection`);
 
     return result;
   } catch (err) {
@@ -50,7 +50,7 @@ export const remove = async (query, collectionName, isMany = false) => {
 
   try {
     if (!isMany) {
-      await collection.deletOne(query);
+      await collection.deleteOne(query);
     } else {
       await collection.deleteMany(query);
     }
@@ -78,14 +78,12 @@ export const createUser = async (userData) => {
 };
 
 //functino related with board
-export const pagination = async (size, page, category = "") => {
+export const pagination = async (size, page, findQuery = "") => {
   const collection = client.db(process.env.DB_NAME).collection("posts");
   try {
-    const count = await collection.countDocuments(
-      category ? { category: category } : {}
-    );
+    const count = await collection.countDocuments(findQuery ? findQuery : {});
     const cursor = collection
-      .find(category ? { category: category } : {})
+      .find(findQuery ? findQuery : {})
       .skip(page * size)
       .limit(+size);
     let posts = [];

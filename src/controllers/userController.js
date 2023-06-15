@@ -1,6 +1,9 @@
-import { find, createUser } from "../services/db/manager.js";
+import { find, remove, createUser } from "../services/db/manager.js";
 import { compare } from "../utils/bcrypt.js";
-import { generateTokens } from "../services/token/generateToken.js";
+import {
+  generateTokens,
+  regenerateToken,
+} from "../services/token/generateToken.js";
 
 export const signUp = async (req, res) => {
   const { email, emailReceive, nick, pwd, uid } = req.body;
@@ -44,7 +47,11 @@ export const signIn = async (req, res) => {
           httpOnly: true,
           signed: true,
         })
-        .json(JSON.stringify({ accessToken: tokens.accessToken }));
+        .set({
+          Authorization: `Bearer ${tokens.accessToken}`,
+          "Access-Control-Expose-Headers": "Authorization", //explicitly inform to expose auth header
+        })
+        .send("sign in complete");
     } else {
       throw new Error("passowrd does not match");
     }
@@ -53,5 +60,50 @@ export const signIn = async (req, res) => {
 
     console.error("signin:", err);
     res.status(403).json({ message: "Access forbidden" });
+  }
+};
+
+export const refresh = async (req, res) => {
+  console.log("-------------------------------------------");
+  console.log("silent refresh executed");
+  try {
+    const refreshToken = req.signedCookies.refreshToken;
+
+    if (refreshToken) {
+      const result = await regenerateToken(refreshToken);
+      const newAccessToken = result.accessToken;
+      console.log("-------------------------------------------");
+      console.log("newAccessToken:", newAccessToken);
+      res
+        .status(200)
+        .set({
+          Authorization: `Bearer ${newAccessToken}`,
+          "Access-Control-Expose-Headers": "Authorization", //explicitly inform to expose auth header
+        })
+        .send("refresh accessToken complete");
+    } else {
+      res.status(401).send("no valid refresh token");
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(401).send(err);
+  }
+};
+
+export const logOut = async (req, res) => {
+  try {
+    const refreshToken = req.signedCookies.refreshToken;
+    await remove({ token: refreshToken }, "refresh_tokens");
+    console.log("delete refresh token completed");
+    res
+      .status(200)
+      .clearCookie("refreshToken", {
+        httpOnly: true,
+        signed: true,
+      })
+      .send("user logout");
+  } catch (err) {
+    console.log(err);
+    res.status(404).send(err);
   }
 };
