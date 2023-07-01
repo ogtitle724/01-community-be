@@ -1,14 +1,22 @@
+import { Mutex } from "async-mutex";
 import { find, remove, createUser } from "../services/db/manager.js";
-import { compare } from "../utils/bcrypt.js";
+import { compare, hashWithSalt } from "../utils/bcrypt.js";
 import {
   generateTokens,
   regenerateToken,
 } from "../services/token/generateToken.js";
+import { sendMailTo } from "../services/mail/mail.js";
 
 export const signUp = async (req, res) => {
-  const { email, emailReceive, nick, pwd, uid } = req.body;
+  console.log("signup processing");
+  const { email, nick, pwd, uid } = req.body;
 
-  console.log("signup processing...");
+  const hashedPwd = await hashWithSalt(pwd);
+  const now = new Date().toString();
+
+  req.body.pwd = hashedPwd;
+  req.body.id = await hashWithSalt(now);
+  req.body["join_date"] = now;
 
   try {
     if (await find({ email }, "users"))
@@ -51,7 +59,7 @@ export const signIn = async (req, res) => {
           Authorization: `Bearer ${tokens.accessToken}`,
           "Access-Control-Expose-Headers": "Authorization", //explicitly inform to expose auth header
         })
-        .send("sign in complete");
+        .json(userData.id);
     } else {
       throw new Error("passowrd does not match");
     }
@@ -105,5 +113,48 @@ export const logOut = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(404).send(err);
+  }
+};
+
+let verificationCodes = new Set();
+const expirationTime = 1000 * 60 * 4;
+const mutex = new Mutex();
+
+export const generateCode = async (req, res) => {
+  console.log("generate code");
+  const { email } = req.body.email;
+  let code = ~~(100000 * Math.random());
+
+  while (verificationCodes.has(code)) {
+    code = ~~(100000 * Math.random());
+  }
+
+  const release = await mutex.acquire();
+
+  try {
+    verificationCodes.add(code);
+
+    setTimeout(() => {
+      mutex.runExclusive(() => verificationCodes.delete(code));
+    }, expirationTime);
+
+    /* sendMailTo(email, code); */
+    res.json(code).status(200);
+  } catch (err) {
+    console.log(err);
+  } finally {
+    release();
+  }
+};
+
+export const verifyCode = async (req, res) => {
+  console.log("verify code");
+  const code = req.body.authCode;
+
+  if (verificationCodes.has(code)) {
+    mutex.runExclusive(() => verificationCodes.delete(code));
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(401);
   }
 };

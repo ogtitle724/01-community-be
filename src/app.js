@@ -22,9 +22,9 @@ app.use(
     credentials: true,
   })
 );
+app.use(autoLogIn);
 
 // Routes setup
-app.use(autoLogIn);
 app.use("/api/board", boardRouter);
 app.use("/api/auth", authRouter);
 

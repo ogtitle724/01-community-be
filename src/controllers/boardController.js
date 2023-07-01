@@ -22,3 +22,8 @@ export const sendFilteredPost = async (req, res) => {
 
   res.status(200).json(postsObj);
 };
+
+export const uploadPost = async (req, res) => {
+  const { title, category, content, thumbnail } = req.body;
+  res.status(200).send("good");
+};

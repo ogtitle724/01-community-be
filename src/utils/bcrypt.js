@@ -1,10 +1,11 @@
 import bcrypt from "bcrypt";
 
-export const hash = async (arg) => {
+export const hashWithSalt = async (arg) => {
   console.log("hashing...");
 
   try {
-    const salt = await bcrypt.genSalt();
+    const saltRound = 10;
+    const salt = await bcrypt.genSalt(saltRound);
     const hashedArg = await bcrypt.hash(arg, salt);
 
     return hashedArg;

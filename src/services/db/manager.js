@@ -1,5 +1,5 @@
 import { client } from "./connect.js";
-import { hash } from "../../utils/bcrypt.js";
+import { hashWithSalt } from "../../utils/bcrypt.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -66,7 +66,6 @@ export const createUser = async (userData) => {
   const collection = client.db(process.env.DB_NAME).collection("users");
 
   try {
-    userData.pwd = await hash(userData.pwd);
     await collection.insertOne(userData);
     console.log("User creation is complete.");
 
@@ -78,6 +77,21 @@ export const createUser = async (userData) => {
 };
 
 //functino related with board
+export const createPost = async (postData) => {
+  const collection = client.db(process.env.DB_NAME).collection("posts");
+
+  try {
+    userData.pwd = await hashWithSalt(userData.pwd);
+    await collection.insertOne(userData);
+    console.log("User creation is complete.");
+
+    return;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+};
+
 export const pagination = async (size, page, findQuery = "") => {
   const collection = client.db(process.env.DB_NAME).collection("posts");
   try {
