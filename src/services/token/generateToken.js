@@ -53,7 +53,7 @@ export const regenerateToken = async (refreshToken) => {
             newTokenData,
             process.env.ACCESS_TOKEN_SECRET
           );
-          console.log("regenerated token:", accessToken);
+          console.log("\naccess token regenerated\n");
           resolve({ accessToken });
         }
       );

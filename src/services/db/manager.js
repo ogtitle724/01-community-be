@@ -38,15 +38,42 @@ export const insert = async (data, collectionName, isMany = false) => {
     }
     return console.log("insertion complete");
   } catch (err) {
-    console.log("-------------------------------------------------db");
     console.log(err);
     return new Error(err);
   }
 };
 
+export const update = async (
+  query,
+  updateData,
+  collectionName,
+  isMany = false
+) => {
+  const collection = client.db(process.env.DB_NAME).collection(collectionName);
+  const updateDoc = {
+    $set: {
+      ...updateData,
+    },
+  };
+
+  console.log("\nupdate...\n");
+
+  try {
+    if (!isMany) {
+      await collection.updateOne(query, updateDoc);
+    } else {
+      await collection.updateManyMany(query, updateDoc);
+    }
+    return console.log("\nupdate complete\n");
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+};
+
 export const remove = async (query, collectionName, isMany = false) => {
   const collection = client.db(process.env.DB_NAME).collection(collectionName);
-  console.log("deleting...");
+  console.log("\ndelete...\n");
 
   try {
     if (!isMany) {
@@ -81,10 +108,8 @@ export const createPost = async (postData) => {
   const collection = client.db(process.env.DB_NAME).collection("posts");
 
   try {
-    userData.pwd = await hashWithSalt(userData.pwd);
-    await collection.insertOne(userData);
-    console.log("User creation is complete.");
-
+    await collection.insertOne(postData);
+    console.log("Post upload complete.");
     return;
   } catch (err) {
     console.log(err);
@@ -111,7 +136,7 @@ export const pagination = async (size, page, findQuery = "") => {
       page: page,
       paged: true,
       last: page === ~~(count / size),
-      totalPages: ~~(count / size),
+      totalPages: ~~((count - 1) / size) + 1,
       totalElements: count,
       size: 20,
       sort: false,

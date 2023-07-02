@@ -1,12 +1,13 @@
+import jwt from "jsonwebtoken";
 import { regenerateToken } from "../services/token/generateToken.js";
 
-const autoLogIn = async (req, res, next) => {
+export const autoLogIn = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const accessToken = authHeader && authHeader.split(" ")[1];
   const refreshToken = req.signedCookies.refreshToken;
 
   if (!accessToken && refreshToken) {
-    console.log("now auto login executed!");
+    console.log("\n\nauto login executed\n");
     try {
       const regenerated = await regenerateToken(refreshToken);
       const newAccessToken = regenerated.accessToken;
@@ -26,4 +27,20 @@ const autoLogIn = async (req, res, next) => {
   next();
 };
 
-export default autoLogIn;
+export const verifyToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const accessToken = authHeader && authHeader.split(" ")[1];
+
+  if (accessToken) {
+    jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET,
+      (err, tokenData) => {
+        if (err) console.error(err);
+        req.user = tokenData;
+      }
+    );
+  }
+
+  next();
+};

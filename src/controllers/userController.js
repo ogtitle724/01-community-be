@@ -8,9 +8,7 @@ import {
 import { sendMailTo } from "../services/mail/mail.js";
 
 export const signUp = async (req, res) => {
-  console.log("signup processing");
   const { email, nick, pwd, uid } = req.body;
-
   const hashedPwd = await hashWithSalt(pwd);
   const now = new Date().toString();
 
@@ -26,7 +24,7 @@ export const signUp = async (req, res) => {
     if (await find({ uid }, "users"))
       throw new Error("this id is already in use");
 
-    console.log("insert user data to database...");
+    console.log("\ninsert user data to database\n");
 
     await createUser(req.body);
 
@@ -64,24 +62,20 @@ export const signIn = async (req, res) => {
       throw new Error("passowrd does not match");
     }
   } catch (err) {
-    console.log("-------------------------------------------------gen");
-
-    console.error("signin:", err);
+    console.error(err);
     res.status(403).json({ message: "Access forbidden" });
   }
 };
 
 export const refresh = async (req, res) => {
-  console.log("-------------------------------------------");
-  console.log("silent refresh executed");
+  console.log("\nsilent refresh executed\n");
   try {
     const refreshToken = req.signedCookies.refreshToken;
 
     if (refreshToken) {
       const result = await regenerateToken(refreshToken);
       const newAccessToken = result.accessToken;
-      console.log("-------------------------------------------");
-      console.log("newAccessToken:", newAccessToken);
+
       res
         .status(200)
         .set({
@@ -102,7 +96,7 @@ export const logOut = async (req, res) => {
   try {
     const refreshToken = req.signedCookies.refreshToken;
     await remove({ token: refreshToken }, "refresh_tokens");
-    console.log("delete refresh token completed");
+    console.log("\ndelete refresh token\n");
     res
       .status(200)
       .clearCookie("refreshToken", {
@@ -121,7 +115,7 @@ const expirationTime = 1000 * 60 * 4;
 const mutex = new Mutex();
 
 export const generateCode = async (req, res) => {
-  console.log("generate code");
+  console.log("\ngenerate code\n");
   const { email } = req.body.email;
   let code = ~~(100000 * Math.random());
 
@@ -148,7 +142,7 @@ export const generateCode = async (req, res) => {
 };
 
 export const verifyCode = async (req, res) => {
-  console.log("verify code");
+  console.log("\nverify code\n");
   const code = req.body.authCode;
 
   if (verificationCodes.has(code)) {

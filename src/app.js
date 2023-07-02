@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
-import autoLogIn from "./middleware/tokenLogin.js";
+import { autoLogIn, verifyToken } from "./middleware/initialProcess.js";
 import boardRouter from "./routes/boardRouter.js";
 import authRouter from "./routes/authRouter.js";
 
@@ -22,7 +22,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(autoLogIn);
+app.use(autoLogIn, verifyToken);
 
 // Routes setup
 app.use("/api/board", boardRouter);
