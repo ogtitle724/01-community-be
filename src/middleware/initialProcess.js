@@ -37,7 +37,7 @@ export const verifyToken = (req, res, next) => {
       process.env.ACCESS_TOKEN_SECRET,
       (err, tokenData) => {
         if (err) console.error(err);
-        req.user = tokenData;
+        req.body.tokenData = tokenData;
       }
     );
   }

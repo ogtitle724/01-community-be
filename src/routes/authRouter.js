@@ -6,9 +6,12 @@ import {
   refresh,
   generateCode,
   verifyCode,
+  sendUserData,
 } from "../controllers/userController.js";
 
 const router = express.Router();
+
+router.get("/getUserData", sendUserData);
 
 router.post("/register", signUp);
 router.post("/authenticate", signIn);

@@ -13,7 +13,7 @@ export const signUp = async (req, res) => {
   const now = new Date().toString();
 
   req.body.pwd = hashedPwd;
-  req.body.id = await hashWithSalt(now);
+  req.body.id = String(Date.now() + ~~(Math.random() * 100000));
   req.body["join_date"] = now;
 
   try {
@@ -46,6 +46,11 @@ export const signIn = async (req, res) => {
 
     if (isPwdMatch) {
       const tokens = await generateTokens(userData);
+      const userDataSend = {
+        id: userData.id,
+        nick: userData.nick,
+        email: userData.email,
+      };
 
       res
         .status(200)
@@ -57,7 +62,7 @@ export const signIn = async (req, res) => {
           Authorization: `Bearer ${tokens.accessToken}`,
           "Access-Control-Expose-Headers": "Authorization", //explicitly inform to expose auth header
         })
-        .json(userData.id);
+        .json(userDataSend);
     } else {
       throw new Error("passowrd does not match");
     }
@@ -107,6 +112,15 @@ export const logOut = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(404).send(err);
+  }
+};
+
+export const sendUserData = (req, res) => {
+  if (req.body.tokenData) {
+    const { nick, email } = req.body.tokenData;
+    res.json({ nick, email });
+  } else {
+    res.sendStatus(500);
   }
 };
 

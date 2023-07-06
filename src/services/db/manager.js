@@ -44,25 +44,20 @@ export const insert = async (data, collectionName, isMany = false) => {
 };
 
 export const update = async (
-  query,
-  updateData,
+  filter,
+  updateQuery,
   collectionName,
   isMany = false
 ) => {
   const collection = client.db(process.env.DB_NAME).collection(collectionName);
-  const updateDoc = {
-    $set: {
-      ...updateData,
-    },
-  };
 
   console.log("\nupdate...\n");
 
   try {
     if (!isMany) {
-      await collection.updateOne(query, updateDoc);
+      await collection.updateOne(filter, updateQuery);
     } else {
-      await collection.updateManyMany(query, updateDoc);
+      await collection.updateManyMany(filter, updateQuery);
     }
     return console.log("\nupdate complete\n");
   } catch (err) {
@@ -123,6 +118,7 @@ export const pagination = async (size, page, findQuery = "") => {
     const count = await collection.countDocuments(findQuery ? findQuery : {});
     const cursor = collection
       .find(findQuery ? findQuery : {})
+      .sort({ wr_date: -1 })
       .skip(page * size)
       .limit(+size);
     let posts = [];
