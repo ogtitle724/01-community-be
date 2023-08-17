@@ -1,31 +1,38 @@
 import express from "express";
 import {
-  sendPosts,
-  sendFilteredPost,
-  sendPostDetail,
-  uploadPost,
+  readPosts,
+  getFilteredPosts,
+  readPost,
+  createPost,
   updatePost,
-  removePost,
-  handleRecommend,
+  deletePost,
+  setPostRec,
   handleView,
   addComment,
+  setCommendRec,
+  deleteComment,
+  updateComment,
 } from "../controllers/boardController.js";
 
 const router = express.Router();
 
-router.get("/post", sendPosts);
-router.get("/search", sendFilteredPost);
-router.get("/:boardId", sendPostDetail);
+//post
+router.post("/post", createPost);
+router.patch("/post/:postId", updatePost);
+router.get("/post/:postId", readPost);
+router.delete("/post/:postId", deletePost);
+router.patch("/post/:postId/recommend", setPostRec);
 
-router.post("/register", uploadPost);
-router.post("/update", updatePost);
-router.post("/delete", removePost);
-router.post("/rec", handleRecommend);
-router.post("/view", handleView);
-router.post("/:boardId/comment", addComment);
-/*router.get("/api/board/recommendBoard", boardController);
+//comment
+router.post("/post/:postId/comment", addComment);
+router.post("/post/:postId/comment/:commentId/reply", addComment);
+router.patch("/post/:postId/comment/:commentId", updateComment);
+router.delete("/post/:postId/comment/:commentId", deleteComment);
+router.patch("/post/:postId/comment/:commentId/recommend", setCommendRec);
 
-router.get("/api/board/{boardId}/comment/delete/{commentId}}", boardController);
-router.get("/api/board/{boardId}/comment", boardController);
- */
+//pagination
+router.get("/posts/search", getFilteredPosts);
+router.get("/posts/best");
+router.get("/posts/:category", readPosts);
+
 export default router;

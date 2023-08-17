@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import { autoLogIn, verifyToken } from "./middleware/initialProcess.js";
 import boardRouter from "./routes/boardRouter.js";
 import authRouter from "./routes/authRouter.js";
+import userRouter from "./routes/userRouter.js";
 
 dotenv.config();
 const app = express();
@@ -17,16 +18,19 @@ app.use(
   //cors setting for cookie
   cors({
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
-app.use(autoLogIn, verifyToken);
+
+app.use(autoLogIn);
+app.use(verifyToken);
 
 // Routes setup
-app.use("/api/board", boardRouter);
-app.use("/api/auth", authRouter);
+app.use("/auth", authRouter);
+app.use("/user", userRouter);
+app.use("/board", boardRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

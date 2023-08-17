@@ -5,7 +5,6 @@ import {
   generateTokens,
   regenerateToken,
 } from "../services/token/generateToken.js";
-import { sendMailTo } from "../services/mail/mail.js";
 
 export const signUp = async (req, res) => {
   const { email, nick, pwd, uid } = req.body;
@@ -24,13 +23,43 @@ export const signUp = async (req, res) => {
     if (await find({ uid }, "users"))
       throw new Error("this id is already in use");
 
-    console.log("\ninsert user data to database\n");
-
     await createUser(req.body);
 
     res.sendStatus(200);
   } catch (err) {
-    return err;
+    console.log(err);
+    res.sendStatus(403);
+  }
+};
+
+export const checkNick = async (req, res) => {
+  const { nick } = req.body;
+
+  try {
+    if (await find({ nick }, "users")) {
+      throw new Error("this nickname is already in use");
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(403);
+  }
+};
+
+export const checkUid = async (req, res) => {
+  const { uid } = req.body;
+  console.log(uid);
+
+  try {
+    if (await find({ uid }, "users")) {
+      throw new Error("this uid is already in use");
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(403);
   }
 };
 
@@ -52,11 +81,16 @@ export const signIn = async (req, res) => {
         email: userData.email,
       };
 
+      const thirtyDaysInMilliseconds = 1 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+      const expirationDate = new Date(Date.now() + thirtyDaysInMilliseconds);
+
       res
         .status(200)
         .cookie("refreshToken", tokens.refreshToken, {
           httpOnly: true,
           signed: true,
+          expires: expirationDate,
+          path: "/",
         })
         .set({
           Authorization: `Bearer ${tokens.accessToken}`,
@@ -72,7 +106,7 @@ export const signIn = async (req, res) => {
   }
 };
 
-export const refresh = async (req, res) => {
+export const renewToken = async (req, res) => {
   console.log("\nsilent refresh executed\n");
   try {
     const refreshToken = req.signedCookies.refreshToken;
@@ -98,10 +132,10 @@ export const refresh = async (req, res) => {
 };
 
 export const logOut = async (req, res) => {
+  console.log("\nlog out\n");
   try {
     const refreshToken = req.signedCookies.refreshToken;
     await remove({ token: refreshToken }, "refresh_tokens");
-    console.log("\ndelete refresh token\n");
     res
       .status(200)
       .clearCookie("refreshToken", {
@@ -115,11 +149,63 @@ export const logOut = async (req, res) => {
   }
 };
 
-export const sendUserData = (req, res) => {
-  if (req.body.tokenData) {
-    const { nick, email } = req.body.tokenData;
-    res.json({ nick, email });
-  } else {
+export const sendUserData = async (req, res) => {
+  const { id } = req.body.tokenData;
+  console.log("\nsend user data\n");
+  try {
+    const postsCursor = await find({ "user.id": id }, "posts", true);
+    const userData = await find({ id: id }, "users");
+    let posts = [];
+    let comments = [];
+
+    for await (const doc of postsCursor) {
+      let temp = {
+        id: doc.id,
+        title: doc.title,
+        category: doc.category,
+        wr_date: doc.wr_date,
+        view_cnt: doc.view_cnt,
+        recommendations: doc.recommendations,
+      };
+      posts.push(temp);
+
+      doc.comments.forEach((comment) => {
+        if (!comment.isDeleted && comment.user.id === id) {
+          comments.push({
+            postId: comment.postId,
+            content: comment.content,
+            wr_date: comment.wr_date,
+            recommendations: comment.recommendations,
+          });
+        }
+
+        if (comment.replies && comment.replies.length > 0) {
+          comment.replies.forEach((reply) => {
+            if (!reply.isDeleted && reply.user.id === id) {
+              comments.push({
+                postId: reply.postId,
+                content: reply.content,
+                wr_date: reply.wr_date,
+                recommendations: reply.recommendations,
+              });
+            }
+          });
+        }
+      });
+    }
+    const send = {
+      user: {
+        id: userData.id,
+        nick: userData.nick,
+        join_date: userData.join_date,
+      },
+      posts,
+      comments,
+    };
+
+    res.status(200).send(send);
+  } catch (err) {
+    console.log(err);
     res.sendStatus(500);
   }
 };

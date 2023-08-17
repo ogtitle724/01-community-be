@@ -8,16 +8,13 @@ dotenv.config();
 export const find = async (query, collectionName, isMany = false) => {
   const collection = client.db(process.env.DB_NAME).collection(collectionName);
   let result;
+
   try {
     if (!isMany) {
       result = await collection.findOne(query);
     } else {
       result = collection.find(query);
     }
-
-    result
-      ? console.log(`Data exists in the collection`)
-      : console.log(`Data does not exist in the collection`);
 
     return result;
   } catch (err) {
@@ -99,7 +96,7 @@ export const createUser = async (userData) => {
 };
 
 //functino related with board
-export const createPost = async (postData) => {
+export const MgCreatePost = async (postData) => {
   const collection = client.db(process.env.DB_NAME).collection("posts");
 
   try {
@@ -124,7 +121,21 @@ export const pagination = async (size, page, findQuery = "") => {
     let posts = [];
 
     for await (let doc of cursor) {
-      posts.push(doc);
+      let recValues = Object.values(doc.recommendations);
+      let recResult =
+        recValues.filter((ele) => ele === 1).length -
+        recValues.filter((ele) => ele === -1).length;
+      let data = {
+        title: doc.title,
+        id: doc.id,
+        nick: doc.user.nick,
+        category: doc.category,
+        wr_date: doc.wr_date,
+        view_cnt: doc.view_cnt,
+        recommendation: recResult,
+      };
+
+      posts.push(data);
     }
 
     const postsObj = {
@@ -132,7 +143,7 @@ export const pagination = async (size, page, findQuery = "") => {
       page: page,
       paged: true,
       last: page === ~~(count / size),
-      totalPages: ~~((count - 1) / size) + 1,
+      totalPages: Math.ceil(count / size),
       totalElements: count,
       size: 20,
       sort: false,

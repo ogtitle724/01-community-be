@@ -1,23 +1,19 @@
 import express from "express";
 import {
-  signUp,
   signIn,
   logOut,
-  refresh,
   generateCode,
   verifyCode,
-  sendUserData,
+  renewToken,
 } from "../controllers/userController.js";
 
 const router = express.Router();
 
-router.get("/getUserData", sendUserData);
+router.get("/logout", logOut);
+router.get("/renew-token", renewToken);
+router.get("/email-authcode", generateCode);
 
-router.post("/register", signUp);
-router.post("/authenticate", signIn);
-router.post("/logout", logOut);
-router.post("/silentRefresh", refresh);
-router.post("/generateCode", generateCode);
-router.post("/verifyCode", verifyCode);
+router.post("/login", signIn);
+router.post("/email-authcode", verifyCode);
 
 export default router;

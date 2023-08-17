@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { regenerateToken } from "../services/token/generateToken.js";
 
 export const autoLogIn = async (req, res, next) => {
+  console.log("initial process 1 executed");
   const authHeader = req.headers["authorization"];
   const accessToken = authHeader && authHeader.split(" ")[1];
   const refreshToken = req.signedCookies.refreshToken;
@@ -28,6 +29,7 @@ export const autoLogIn = async (req, res, next) => {
 };
 
 export const verifyToken = (req, res, next) => {
+  console.log("initial process 2 executed");
   const authHeader = req.headers["authorization"];
   const accessToken = authHeader && authHeader.split(" ")[1];
 
@@ -37,6 +39,7 @@ export const verifyToken = (req, res, next) => {
       process.env.ACCESS_TOKEN_SECRET,
       (err, tokenData) => {
         if (err) console.error(err);
+        console.log(tokenData);
         req.body.tokenData = tokenData;
       }
     );

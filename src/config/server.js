@@ -1,7 +1,7 @@
 import app from "../app.js";
 import { connectDB, client } from "../services/db/connect.js";
 
-const port = 8000;
+const port = 8080;
 
 (async () => {
   await connectDB();
